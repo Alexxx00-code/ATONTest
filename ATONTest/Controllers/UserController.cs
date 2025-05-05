@@ -10,6 +10,7 @@ using System.Security.Claims;
 namespace ATONTest.Controllers
 {
     [ApiController]
+    [CustomExceptionFilter]
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
@@ -51,30 +52,22 @@ namespace ATONTest.Controllers
         {
             var userName = User.FindFirst(ClaimTypes.Name)?.Value;
 
-            if(userName == null)
+            if (userName == null)
             {
                 return Unauthorized();
             }
-
-            try
+            UserModel userResp = _userService.Create(new CreateUserModel
             {
-                UserModel userResp = _userService.Create(new CreateUserModel
-                {
-                    Name = createUser.Name,
-                    Birthday = createUser.Birthday,
-                    Gender = createUser.Gender,
-                    Login = createUser.Login,
-                    Admin = createUser.Admin,
-                    Password = createUser.Password,
-                    CreatedBy = userName,
-                });
+                Name = createUser.Name,
+                Birthday = createUser.Birthday,
+                Gender = createUser.Gender,
+                Login = createUser.Login,
+                Admin = createUser.Admin,
+                Password = createUser.Password,
+                CreatedBy = userName,
+            });
 
-                return Ok(userResp);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(userResp);
         }
 
         [HttpPut("{guid}")]
@@ -87,25 +80,17 @@ namespace ATONTest.Controllers
             {
                 return Unauthorized();
             }
-
-            try
+            UserModel userResp = _userService.UpdateUser(new UpdateUserModel
             {
-                UserModel userResp = _userService.UpdateUser(new UpdateUserModel
-                {
-                    Guid = guid,
-                    Name = updateUser.Name,
-                    Login = updateUser.Login,
-                    Birthday = updateUser.Birthday,
-                    Gender = updateUser.Gender,
-                    ModifiedBy = userName
-                });
+                Guid = guid,
+                Name = updateUser.Name,
+                Login = updateUser.Login,
+                Birthday = updateUser.Birthday,
+                Gender = updateUser.Gender,
+                ModifiedBy = userName
+            });
 
-                return Ok(userResp);
-            }
-            catch(InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(userResp);
         }
 
         [HttpPut()]
@@ -122,24 +107,17 @@ namespace ATONTest.Controllers
 
             Guid userGuid = Guid.Parse(userGuidStr);
 
-            try
+            UserModel userResp = _userService.UpdateUser(new UpdateUserModel
             {
-                UserModel userResp = _userService.UpdateUser(new UpdateUserModel
-                {
-                    Guid = userGuid,
-                    Name = updateUser.Name,
-                    Login = updateUser.Login,
-                    Birthday = updateUser.Birthday,
-                    Gender = updateUser.Gender,
-                    ModifiedBy = userName
-                });
+                Guid = userGuid,
+                Name = updateUser.Name,
+                Login = updateUser.Login,
+                Birthday = updateUser.Birthday,
+                Gender = updateUser.Gender,
+                ModifiedBy = userName
+            });
 
-                return Ok(userResp);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(userResp);
         }
 
         [HttpPut("updatePassword/{guid}")]
@@ -231,30 +209,16 @@ namespace ATONTest.Controllers
                 return Unauthorized();
             }
 
-            try
-            {
-                _userService.RemoveUser(dto.Login, dto.Hard, userName);
-                return Ok();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            _userService.RemoveUser(dto.Login, dto.Hard, userName);
+            return Ok();
         }
 
         [HttpPut("restore")]
         [Authorize(Roles = "Admin")]
         public ActionResult<UserModel> Restore([FromBody] string login)
         {
-            try
-            {
-                _userService.RestoreUser(login);
-                return Ok();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            _userService.RestoreUser(login);
+            return Ok();
         }
 
         private string CreateToken(List<Claim> authClaims)

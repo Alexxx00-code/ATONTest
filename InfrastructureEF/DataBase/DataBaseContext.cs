@@ -18,7 +18,6 @@ namespace InfrastructureEF.DataBase
             {
                 optionsBuilder
                     .UseLazyLoadingProxies(true);
-
             }
 
             optionsBuilder.UseSeeding((context, _) =>

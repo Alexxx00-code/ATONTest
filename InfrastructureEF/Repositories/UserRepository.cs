@@ -8,6 +8,7 @@ namespace InfrastructureEF.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DataBaseContext context;
+
         public UserRepository(DataBaseContext dataBase)
         {
             context = dataBase;

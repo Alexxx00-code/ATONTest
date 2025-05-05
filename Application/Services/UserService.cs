@@ -2,12 +2,14 @@
 using Application.Models;
 using Domain.Interfaces;
 using Domain.Models;
+using System.Text.RegularExpressions;
 
 namespace Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository userRepository;
+
         public UserService(IUserRepository repository)
         {
             userRepository = repository;
@@ -34,9 +36,11 @@ namespace Application.Services
 
         public UserModel Create(CreateUserModel model)
         {
-            if (model.Birthday != null && model.Birthday > DateTime.UtcNow)
+            var (success, msg) = ValidatePassword(model.Password);
+
+            if (!success)
             {
-                throw new InvalidOperationException("Birthday is not valid");
+                throw new InvalidOperationException(msg);
             }
 
             if (userRepository.Get().FirstOrDefault(i => model.Login == i.Login) != null)
@@ -56,6 +60,14 @@ namespace Application.Services
                 CreatedOn = DateTime.UtcNow,
                 Password = GetHash(model.Password),
             };
+
+            (success, msg) = Validate(newUser);
+
+            if (!success)
+            {
+                throw new InvalidOperationException(msg);
+            }
+
             var userRes = userRepository.Create(newUser);
 
             return FillUserModel(userRes);
@@ -75,7 +87,7 @@ namespace Application.Services
         public List<UserModel> GetList(uint minAge = 0, bool revoked = false)
         {
             var list = userRepository.Get();
-            if(minAge > 0)
+            if (minAge > 0)
             {
                 list = list.Where(i => DateTime.UtcNow.AddYears(-1 * (int)minAge) > i.Birthday);
             }
@@ -127,6 +139,13 @@ namespace Application.Services
 
         public UserModel UpdatePassword(UpdatePassword updatePassword)
         {
+            var (success, msg) = ValidatePassword(updatePassword.Password);
+
+            if (!success)
+            {
+                throw new InvalidOperationException(msg);
+            }
+
             var user = userRepository.Get().FirstOrDefault(i => updatePassword.Guid == i.Guid && i.RevokedOn == null);
             if (user == null)
             {
@@ -149,7 +168,7 @@ namespace Application.Services
                 throw new InvalidOperationException("Revoked user not found");
             }
 
-            if(user.Login != updateUser.Login && userRepository.Get().FirstOrDefault(i => updateUser.Login == i.Login) != null)
+            if (user.Login != updateUser.Login && userRepository.Get().FirstOrDefault(i => updateUser.Login == i.Login) != null)
             {
                 throw new InvalidOperationException("Login is already used");
             }
@@ -160,6 +179,14 @@ namespace Application.Services
             user.Gender = updateUser.Gender;
             user.ModifiedBy = updateUser.ModifiedBy;
             user.ModifiedOn = DateTime.UtcNow;
+
+            var (success, msg) = Validate(user);
+
+            if (!success)
+            {
+                throw new InvalidOperationException(msg);
+            }
+
             user = userRepository.Update(user);
 
             return FillUserModel(user);
@@ -203,6 +230,42 @@ namespace Application.Services
                     Admin = user.Admin,
                     Revoked = user.RevokedOn != null,
                 });
+        }
+
+        private (bool, string) Validate(User user)
+        {
+            if (user.Birthday != null && user.Birthday > DateTime.UtcNow)
+            {
+                return (false, "Birthday is not valid");
+            }
+
+            var regLogin = new Regex("^[A-z0-9]+$");
+            if (!regLogin.IsMatch(user.Login))
+            {
+                return (false, "Login is not valid");
+            }
+
+            var regName = new Regex("^[a-zа-яё]+$", RegexOptions.IgnoreCase);
+            if (!regName.IsMatch(user.Name))
+            {
+                return (false, "Name is not valid");
+            }
+
+            return (true, "");
+        }
+
+        private (bool, string) ValidatePassword(string password)
+        {
+            var reg = new Regex("^[A-z0-9]+$");
+
+            if (reg.IsMatch(password))
+            {
+                return (true, "");
+            }
+            else
+            {
+                return (false, "Password is not valid");
+            }
         }
     }
 }

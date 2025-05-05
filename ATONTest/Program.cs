@@ -8,6 +8,7 @@ using Domain.Interfaces;
 using InfrastructureEF.Repositories;
 using Application.Interfaces;
 using Application.Services;
+using ATONTest;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,7 +63,7 @@ builder.Services.AddScoped<DataBaseContext>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<CustomExceptionFilter>());
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
