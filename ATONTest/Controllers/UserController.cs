@@ -4,7 +4,6 @@ using ATONTest.DTOModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -14,8 +13,7 @@ namespace ATONTest.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private IUserService _userService;
-        private readonly IHttpContextAccessor _context;
+        private readonly IUserService _userService;
 
         public UserController(IUserService userService)
         {
