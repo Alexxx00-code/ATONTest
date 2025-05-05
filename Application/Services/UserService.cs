@@ -251,6 +251,11 @@ namespace Application.Services
                 return (false, "Name is not valid");
             }
 
+            if (user.Gender < 0 || user.Gender > 2)
+            {
+                return (false, "Gender is not valid");
+            }
+
             return (true, "");
         }
 
